@@ -1,7 +1,8 @@
 import { Button } from "@/components/ui/button";
-import { Menu } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import { motion } from "framer-motion";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useIsMobile } from "@/hooks/use-is-mobile";
 
 const navigationItems = [
   { name: "Inicio", href: "#inicio" },
@@ -15,19 +16,22 @@ const navigationItems = [
 
 export function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const isMobile = useIsMobile();
 
-  // Detectar scroll para cambiar el header
-  useState(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 10);
-    };
+  useEffect(() => {
+    const handleScroll = () => setIsScrolled(window.scrollY > 10);
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
-  });
+  }, []);
+
+  useEffect(() => {
+    if (!isMobile) setMobileOpen(false);
+  }, [isMobile]);
 
   return (
     <motion.header
-      className={`fixed top-0 w-full backdrop-blur supports-backdrop-filter:bg-background/60 z-50 border-b transition-all duration-300 ${
+      className={`fixed top-0 w-full backdrop-blur supports-[backdrop-filter]:bg-background/60 z-50 border-b transition-all duration-300 ${
         isScrolled
           ? "bg-background/95 border-border shadow-sm"
           : "bg-background/80 border-border/50"
@@ -38,8 +42,8 @@ export function Header() {
     >
       <div className="container mx-auto px-4 lg:px-8">
         <div className="flex h-16 items-center justify-between">
-          {/* Logo with animation */}
-          <motion.div
+          <motion.a
+            href="#inicio"
             className="flex items-center gap-2"
             whileHover={{ scale: 1.02 }}
             transition={{ type: "spring", stiffness: 400, damping: 10 }}
@@ -49,6 +53,7 @@ export function Header() {
               whileHover={{ rotate: 360 }}
               transition={{ duration: 0.6, ease: "easeInOut" }}
             >
+              {/* logo */}
               <svg
                 viewBox="0 0 24 24"
                 fill="none"
@@ -64,11 +69,11 @@ export function Header() {
               </svg>
             </motion.div>
             <span className="font-serif text-xl font-semibold">
-              Belleza spa
+              Belleza Spa
             </span>
-          </motion.div>
+          </motion.a>
 
-          {/* Navigation with stagger animation */}
+          {/* Desktop nav */}
           <motion.nav
             className="hidden md:flex items-center gap-8"
             initial="hidden"
@@ -77,10 +82,7 @@ export function Header() {
               hidden: { opacity: 0 },
               visible: {
                 opacity: 1,
-                transition: {
-                  staggerChildren: 0.08,
-                  delayChildren: 0.2,
-                },
+                transition: { staggerChildren: 0.08, delayChildren: 0.2 },
               },
             }}
           >
@@ -97,16 +99,13 @@ export function Header() {
                 transition={{ type: "spring", stiffness: 300, damping: 20 }}
               >
                 {item.name}
-                <motion.span
-                  className="absolute -bottom-1 left-0 w-0 h-0.5 bg-primary group-hover:w-full transition-all duration-300"
-                  layoutId="underline"
-                />
+                <motion.span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-primary group-hover:w-full transition-all duration-300" />
               </motion.a>
             ))}
           </motion.nav>
 
-          {/* CTA Buttons with animation */}
-          <div className="flex items-center gap-4">
+          {/* Right actions */}
+          <div className="flex items-center gap-2">
             <motion.div
               whileHover={{ scale: 1.05, y: -2 }}
               whileTap={{ scale: 0.95 }}
@@ -116,18 +115,55 @@ export function Header() {
               <Button>Reservar Cita</Button>
             </motion.div>
 
-            <motion.div
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
-              transition={{ type: "spring", stiffness: 400, damping: 15 }}
+            {/* Mobile toggle */}
+            <motion.button
+              aria-label="Abrir menú"
+              className="md:hidden inline-flex items-center justify-center rounded-md p-2 hover:bg-secondary/40"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => setMobileOpen((v) => !v)}
             >
-              <Button variant="ghost" size="icon" className="md:hidden">
+              {mobileOpen ? (
+                <X className="h-5 w-5" />
+              ) : (
                 <Menu className="h-5 w-5" />
-              </Button>
-            </motion.div>
+              )}
+            </motion.button>
           </div>
         </div>
       </div>
+
+      {/* Mobile panel */}
+      <motion.div
+        initial={false}
+        animate={mobileOpen ? "open" : "closed"}
+        variants={{
+          open: { height: "auto", opacity: 1 },
+          closed: { height: 0, opacity: 0 },
+        }}
+        className="md:hidden overflow-hidden border-t border-border"
+      >
+        <div className="container mx-auto px-4 lg:px-8 py-3">
+          <div className="grid gap-2">
+            {navigationItems.map((item) => (
+              <a
+                key={item.name}
+                href={item.href}
+                className="py-2 text-sm font-medium hover:text-primary"
+                onClick={() => setMobileOpen(false)}
+              >
+                {item.name}
+              </a>
+            ))}
+            <Button
+              className="mt-2 w-full"
+              onClick={() => setMobileOpen(false)}
+            >
+              Reservar Cita
+            </Button>
+          </div>
+        </div>
+      </motion.div>
     </motion.header>
   );
 }

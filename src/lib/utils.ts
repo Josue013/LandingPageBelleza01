@@ -8,5 +8,5 @@ export function cn(...inputs: ClassValue[]) {
 // Helper to get asset URLs
 export function assetUrl(path: string): string {
   const cleanPath = path.startsWith('/') ? path.slice(1) : path
-  return `/${cleanPath}`
+  return `${import.meta.env.BASE_URL}${cleanPath}`
 }
